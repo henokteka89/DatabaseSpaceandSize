@@ -9,3 +9,18 @@ GROUP BY
     d.name
 ORDER BY
     DatabaseSizeMB DESC;
+
+-- List all databases with their total sizes in GB, sorted in descending order
+SELECT 
+    d.name AS DatabaseName,
+      CAST(SUM(mf.size) * 8 / 1024.0 / 1024.0 AS DECIMAL(10, 2)) AS TotalSizeGB
+	--, CAST(SUM(CASE WHEN mf.type = 0 THEN mf.size ELSE 0 END) * 8 / 1024.0 / 1024.0 AS DECIMAL(10, 2)) AS DataSizeGB
+ --   , CAST(SUM(CASE WHEN mf.type = 1 THEN mf.size ELSE 0 END) * 8 / 1024.0 / 1024.0 AS DECIMAL(10, 2)) AS LogSizeGB
+FROM 
+    sys.master_files AS mf
+INNER JOIN 
+    sys.databases AS d ON mf.database_id = d.database_id
+GROUP BY 
+    d.name
+ORDER BY 
+    TotalSizeGB DESC;
