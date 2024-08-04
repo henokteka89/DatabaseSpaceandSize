@@ -4,11 +4,11 @@ Import-Module dbatools
 # Define the SQL Server instance
 $SqlInstance = 'henok'  # Replace with your SQL Server instance name
 
-# Get the list of all databases with their sizes, sorted in descending order
+# Get the list of all databases with their sizes, sorted in descending order (in MB)
 $databases = Get-DbaDatabase -SqlInstance $SqlInstance | 
-             Select-Object Name, @{Name='Size (MB)';Expression={[math]::round($_.Size,2)}}, 
-                           @{Name='Data Size (MB)';Expression={[math]::round($_.DataSize,2)}}, 
-                           @{Name='Log Size (MB)';Expression={[math]::round($_.LogSize,2)}} |
+             Select-Object Name, @{Name='Size (MB)';Expression={[math]::round($_.Size,2)}}, #Size/1024 For GB
+                           @{Name='Data Size (MB)';Expression={[math]::round($_.DataSize,2)}}, #DataSize/1024 For GB
+                           @{Name='Log Size (MB)';Expression={[math]::round($_.LogSize,2)}} |  #LogSize/1024 For GB
              Sort-Object 'Size (MB)' -Descending
 
 # Display the database sizes
