@@ -1,3 +1,4 @@
+--For each database
 SELECT 
     name,
     TotalSizeMB = CAST(size AS bigint) * 8 / 1024,  -- size is in 8KB pages
@@ -8,7 +9,7 @@ SELECT
         / (CAST(size AS bigint) * 8.0 / 1024) * 100
 FROM sys.database_files;
 
-
+--For all databases
 USE master;
 GO
 drop table if exists #tmp
