@@ -1,0 +1,43 @@
+SELECT 
+    name,
+    TotalSizeMB = CAST(size AS bigint) * 8 / 1024,  -- size is in 8KB pages
+    UsedSpaceMB = CAST(FILEPROPERTY(name, 'SpaceUsed') AS int) * 8 / 1024,
+    SpaceLeftMB = (CAST(size AS bigint) * 8 / 1024) - (CAST(FILEPROPERTY(name, 'SpaceUsed') AS int) * 8 / 1024),
+    FreePercentage = 
+        ((CAST(size AS bigint) * 8.0 / 1024) - (CAST(FILEPROPERTY(name, 'SpaceUsed') AS int) * 8.0 / 1024)) 
+        / (CAST(size AS bigint) * 8.0 / 1024) * 100
+FROM sys.database_files;
+
+
+USE master;
+GO
+drop table if exists #tmp
+create table #tmp (servername varchar (50), dbname varchar(50), [filename] varchar(50), totalsizemb int, usedspacemb int, spaceleftmb int, 
+UsedPercentage float, freepercentage float)
+DECLARE @command NVARCHAR(MAX);
+
+SET @command = '
+USE [?];
+SELECT @@servername as ServerName , 
+    DBName = DB_NAME(),
+    FileName = name,
+    TotalSizeMB = CAST(size AS BIGINT) * 8 / 1024,
+    UsedSpaceMB = CAST(FILEPROPERTY(name, ''SpaceUsed'') AS INT) * 8 / 1024,
+    SpaceLeftMB = (CAST(size AS BIGINT) * 8 / 1024) 
+                  - (CAST(FILEPROPERTY(name, ''SpaceUsed'') AS INT) * 8 / 1024),
+    UsedPercentage = CAST(
+        (CAST(FILEPROPERTY(name, ''SpaceUsed'') AS INT) * 8.0 / 1024) 
+        / (CAST(size AS BIGINT) * 8.0 / 1024) * 100 AS DECIMAL(5,2)),
+    FreePercentage = CAST(
+        ((CAST(size AS BIGINT) * 8.0 / 1024) 
+        - (CAST(FILEPROPERTY(name, ''SpaceUsed'') AS INT) * 8.0 / 1024)) 
+        / (CAST(size AS BIGINT) * 8.0 / 1024) * 100 AS DECIMAL(5,2))
+FROM sys.database_files;
+';
+ 
+insert into #tmp
+EXEC sp_MSforeachdb @command;
+
+select * from #tmp where usedpercentage >= 90 and dbname not in ('tempdb')
+order by usedpercentage desc  
+
